@@ -1,0 +1,46 @@
+---
+- name: "AWS - Install docker"
+  hosts: ec2_instances
+  become: yes
+  tasks:
+    - name: Update yum package index
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add ec2-user to the docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Run Docker Hello World container
+      command: docker run hello-world
+      register: docker_run_output
+      failed_when: "'Hello from Docker!' not in docker_run_output.stdout"
+
+    - name: Print Docker Hello World output
+      debug:
+        var: docker_run_output.stdout
+        
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Start and enable Nginx service
+      systemd:
+        name: nginx
+        enabled: yes
+        state: started
